@@ -11,5 +11,8 @@
   "devDependencies": {
     "eslint": "^5.8.0",
     "eslint-plugin-node": "^8.0.0"
+  },
+  "dependencies": {
+    "sqlite3": "^4.0.3"
   }
 }
