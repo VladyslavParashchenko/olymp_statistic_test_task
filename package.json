@@ -1,0 +1,15 @@
+{
+  "name": "olymp_statistic",
+  "version": "1.0.0",
+  "description": "test task",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Vladyslav Parashchenko",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^5.8.0",
+    "eslint-plugin-node": "^8.0.0"
+  }
+}
