@@ -3,21 +3,21 @@ const DB = require("./db");
 module.exports = class ChartBuilder {
   constructor(chartParams) {
     this.chartParams = chartParams;
-    this.db = new DB();
+
+    this.db = this.chartParams['char_type'] == 'medals' ? (new DB.MedalsStatDB()) : (new DB.TopTeamsStatDB());
     this.maxValue;
   }
 
   buildChartByDataFromDB() {
-    this.dataFromDb = this.db.selectMedalsStat(this.chartParams)
+    this.dataFromDb = this.db.selectStat(this.chartParams)
       .then(
         response => {
           this.dataFromDb = response;
-          return this.db.selectMaxMedalsStat();
+          return this.db.selectMaxAmountStat(this.chartParams);
         }
       )
       .then(
         response => {
-          console.log(response[0]['max_count']);
           this.maxValue = response[0]['max_count'];
           return this.handleDataFromDb();
         }
@@ -25,14 +25,25 @@ module.exports = class ChartBuilder {
         error => console.log(error.message)
       );
   }
+
   display() {
+    this.displayChartTitle();
     this.dataFromDb.forEach(item => {
-      console.log(item['year']+ ''.padEnd(' ', 5)+''.padStart(item['relative_value'], '-'));
+      let firstColumn = item['item'] + '     ';
+      let secondColumn;
+      if (item['relative_value'] == 0) {
+        console.log(firstColumn);
+      } else {
+        secondColumn = ' '.repeat(item['relative_value']);
+        console.log(firstColumn, '\x1b[41m', secondColumn, '\x1b[0m');
+      }
+
     });
   }
 
   handleDataFromDb() {
-    let maxRelaviteValue = 200;
+    let maxRelaviteValue = 150;
+    console.log('sf'+this.maxValue);
     this.dataFromDb = this.dataFromDb.map((item) => {
       let relativeValue = Math.ceil((item["count"] * maxRelaviteValue) / this.maxValue);
       item['relative_value'] = relativeValue;
@@ -40,5 +51,16 @@ module.exports = class ChartBuilder {
     });
     console.log(this.dataFromDb);
     this.display();
+  }
+
+  displayChartTitle() {
+    switch (this.chartParams['char_type']) {
+      case 'medals':
+        console.log('Year', '     ', 'Amount');
+        return;
+      case 'top-teams':
+        console.log('NOC', '     ', 'Amount');
+        return;
+    }
   }
 };
