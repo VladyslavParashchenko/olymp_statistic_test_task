@@ -10,26 +10,30 @@ function processInputParamsByChartType(params, chartType){
     let values = {};
     switch(chartType){
         case 'medals':
-            values['season'] = getEnumByValue(getValueFromParams(params, ['winter', 'summer']));
+            values['season'] = getEnumByValue(getValueFromParams(params, ['winter', 'summer'], true,'season'));
             values['medal'] = getEnumByValue(getValueFromParams(params, ['gold', 'silver','bronze']));
+            if(params.length != 1){
+                throw `params are not valid`;
+            } 
             values['noc_name'] = params[0];
-            console.log(params);
             return values;
         case 'top-teams':
-            values['season'] = getEnumByValue(getValueFromParams(params, ['winter', 'summer']));
+            values['season'] = getEnumByValue(getValueFromParams(params, ['winter', 'summer'], true, 'season'));
             values['medal'] = getEnumByValue(getValueFromParams(params, ['gold', 'silver', 'bronze']));
             values['year'] = params[0] || null;
-            console.log(params);
             return values;
     
     }    
 }
 
-function getValueFromParams(params, possibleValues) {
+function getValueFromParams(params, possibleValues, required = false, paramName) {
     let valueFromParams = null;
     possibleValues.forEach(value => {
         valueFromParams = isValuePresentInParams(params, value) ? value : valueFromParams;
     });
+    if(required && valueFromParams== null){
+        throw `param ${paramName} is required`;
+    }
     return valueFromParams;
 }
 

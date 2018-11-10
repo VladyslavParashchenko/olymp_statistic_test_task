@@ -12,9 +12,7 @@ class DB {
       this.db.all(query, (err, rows) => {
         if (err) {
           reject(err);
-          // console.log(err.message);
         } else {
-          // console.log(rows);
           resolve(rows);
         }
       });
@@ -22,14 +20,12 @@ class DB {
   }
   
   buildRestictionsByParams(params) {
-    console.log(params);
     let restrictions = [];
     for (let key in params) {
       if (key != "char_type" && params[key] != null) {
         restrictions.push(key + `="${params[key]}"`);
       }
     }
-    console.log(restrictions);
     if (restrictions.length != 0) {
       return "where " + restrictions.join(" and ")
     }
@@ -47,7 +43,6 @@ class MedalsStatDB extends DB {
     LEFT JOIN teams t on t.id=a.team_id  ${this.buildRestictionsByParams(
       params
       )} GROUP BY year order by year desc;`;
-      console.log(sql);
       return this.runQuery(sql);
     }
     
@@ -55,7 +50,6 @@ class MedalsStatDB extends DB {
       let sql = `SELECT year item, max(count) max_count from(SELECT  year, count(*) count FROM games g LEFT JOIN results r on g.id=r.game_id LEFT JOIN athletes a on a.id=r.athlete_id 
       LEFT JOIN teams t on t.id=a.team_id  ${this.buildRestictionsByParams(params)} 
       GROUP BY year);`;
-      console.log(sql);
       return this.runQuery(sql);
     }
   }
@@ -72,7 +66,6 @@ class MedalsStatDB extends DB {
       (SELECT avg(count) FROM (SELECT  noc_name, count(t.id) count FROM games g JOIN results r on g.id=r.game_id JOIN athletes a on a.id=r.athlete_id 
       JOIN teams t on t.id=a.team_id  ${this.buildRestictionsByParams(params)} 
       GROUP BY noc_name));`;
-      console.log(sql);
       return this.runQuery(sql);
     }
 
@@ -80,7 +73,6 @@ class MedalsStatDB extends DB {
       let sql = `SELECT noc_name item, max(count) max_count FROM (SELECT  noc_name, count(t.id) count FROM games g JOIN results r on g.id=r.game_id JOIN athletes a on a.id=r.athlete_id 
       JOIN teams t on t.id=a.team_id  ${this.buildRestictionsByParams(params)} 
       GROUP BY noc_name);`;
-    console.log(sql);
     return this.runQuery(sql);
   }
 }

@@ -13,6 +13,9 @@ module.exports = class ChartBuilder {
       .then(
         response => {
           this.dataFromDb = response;
+          if(this.dataFromDb.length == 0){
+            throw 'Empty';
+          }
           return this.db.selectMaxAmountStat(this.chartParams);
         }
       )
@@ -22,7 +25,7 @@ module.exports = class ChartBuilder {
           return this.handleDataFromDb();
         }
       ).catch(
-        error => console.log(error.message)
+        error => console.log(error)
       );
   }
 
@@ -43,13 +46,11 @@ module.exports = class ChartBuilder {
 
   handleDataFromDb() {
     let maxRelaviteValue = 150;
-    console.log('sf'+this.maxValue);
     this.dataFromDb = this.dataFromDb.map((item) => {
       let relativeValue = Math.ceil((item["count"] * maxRelaviteValue) / this.maxValue);
       item['relative_value'] = relativeValue;
       return item;
     });
-    console.log(this.dataFromDb);
     this.display();
   }
 
