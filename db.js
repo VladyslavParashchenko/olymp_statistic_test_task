@@ -60,7 +60,6 @@ class TopTeamsStatDB extends DB {
   }
 
   selectStat (params) {
-    console.log(params)
     let sql = `SELECT item, count FROM (SELECT  noc_name item, count(t.id) count FROM games g JOIN results r on g.id=r.game_id JOIN athletes a on a.id=r.athlete_id 
       JOIN teams t on t.id=a.team_id  ${this.buildRestictionsByParams(params)} 
       GROUP BY noc_name order by count desc) where count >= 
