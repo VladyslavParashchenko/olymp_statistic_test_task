@@ -4,7 +4,9 @@
   "description": "test task",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "es-lint": "./node_modules/.bin/eslint *.js",
+    "es-lint-fix": "./node_modules/.bin/eslint *.js --fix"
   },
   "author": "Vladyslav Parashchenko",
   "license": "ISC",
