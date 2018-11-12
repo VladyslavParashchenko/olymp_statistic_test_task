@@ -1,7 +1,7 @@
 module.exports = function (params) {
   let chartType = params.shift()
   let objectWithParams = processInputParamsByChartType(params, chartType)
-  objectWithParams['char_type'] = chartType
+  objectWithParams['chart_type'] = chartType
   return objectWithParams
 }
 

@@ -1,0 +1,3 @@
+#!/bin/bash  
+
+node ./stat_builder.js $1 $2 $3 $4

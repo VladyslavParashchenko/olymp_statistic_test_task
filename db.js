@@ -1,8 +1,8 @@
 let sqlite3 = require('sqlite3').verbose()
-let db_file_name = 'olympic_history.db'
+let dbFileName = 'olympic_history.db'
 class DB {
   constructor () {
-    this.db = new sqlite3.Database(db_file_name)
+    this.db = new sqlite3.Database(dbFileName)
   }
 
   runQuery (query) {
@@ -20,27 +20,23 @@ class DB {
   buildRestictionsByParams (params) {
     let restrictions = []
     for (let key in params) {
-      if (key != 'char_type' && params[key] != null) {
+      if (key !== 'chart_type' && params[key] !== null) {
         restrictions.push(`${key}="${params[key]}"`)
       }
     }
-    return restrictions.length != 0
+    return restrictions.length !== 0
       ? `where ${restrictions.join(' and ')}`
       : ''
   }
 
   buildRestictionsByParam (params, paramName) {
-    return params[paramName] == null
+    return params[paramName] === null
       ? ''
       : `where ${paramName}='${params[paramName]}'`
   }
 }
 
 class MedalsStatDB extends DB {
-  constructor () {
-    super()
-  }
-
   selectStat (params) {
     let sql = `SELECT * FROM (SELECT  year item, count(r.id) count FROM games g JOIN results r on g.id=r.game_id JOIN athletes a on a.id=r.athlete_id 
     JOIN teams t on t.id=a.team_id ${this.buildRestictionsByParams(params)}  GROUP BY year union select year, 0 from games) GROUP BY item ORDER BY item desc;`
@@ -55,10 +51,6 @@ class MedalsStatDB extends DB {
 }
 
 class TopTeamsStatDB extends DB {
-  constructor () {
-    super()
-  }
-
   selectStat (params) {
     let sql = `SELECT item, count FROM (SELECT  noc_name item, count(t.id) count FROM games g JOIN results r on g.id=r.game_id JOIN athletes a on a.id=r.athlete_id 
       JOIN teams t on t.id=a.team_id  ${this.buildRestictionsByParams(params)} 
