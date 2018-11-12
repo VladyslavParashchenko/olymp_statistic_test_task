@@ -34,7 +34,7 @@ module.exports = class ChartBuilder {
         this.dataFromDb.forEach(item => {
             let firstColumn = item['item'] + '     ';
             let secondColumn;
-            if (item['relative_value'] == 0) {
+            if (item['count'] == 0) {
                 console.log(firstColumn);
             } else {
                 secondColumn = ' '.repeat(item['relative_value']);

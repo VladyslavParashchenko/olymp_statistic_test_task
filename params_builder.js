@@ -14,7 +14,7 @@ function processInputParamsByChartType(params, chartType) {
             if (params.length != 1) {
                 throw `params are not valid`;
             }
-            values['noc_name'] = params[0];
+            values['noc_name'] = params[0].toUpperCase();
             return values;
         case 'top-teams':
             values['season'] = getEnumByValue(getValueFromParams(params, ['winter', 'summer'], true, 'season'));
