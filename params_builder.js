@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = function (params) {
   let chartType = params.shift();
   let objectWithParams = processInputParamsByChartType(params, chartType);

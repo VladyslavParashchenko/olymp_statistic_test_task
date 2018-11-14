@@ -1,5 +1,3 @@
-'use strict';
-
 const DB = require('./db');
 module.exports = class ChartBuilder {
   constructor (chartParams) {
@@ -12,7 +10,6 @@ module.exports = class ChartBuilder {
       .then(
         response => {
           this.dataFromDb = response;
-          console.log(this.dataFromDb);
           if (this.dataFromDb.length === 0) {
             throw new Error('Empty');
           }
