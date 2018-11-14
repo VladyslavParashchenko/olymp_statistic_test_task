@@ -270,8 +270,10 @@ function closeDbConnection () {
 }
 
 function findGame (game) {
+  // console.log(game);
   let index = 0;
   for (let gameKey in games) {
+    console.log(gameKey + '=>' + game);
     if (gameKey === game) {
       return index;
     }
