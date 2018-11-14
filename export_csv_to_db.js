@@ -2,31 +2,47 @@ const fs = require('fs');
 const readline = require('readline');
 const sqlite3 = require('sqlite3').verbose();
 let dbFileName = 'olympic_history.db';
+
+let filename = process.argv.slice(2)[0] || 'athlete_events.csv';
+
+process.on('SIGINT', closeDbConnection);
+process.on('SIGTERM', closeDbConnection);
+
+let sports = new Set();
+let events = new Set();
+let games = {};
+let teams = {};
+let users = [];
+let userList = {};
+let object;
+
 let db = new sqlite3.Database(dbFileName, (err) => {
   if (err) {
     console.error(err.message);
+  } else {
+    let tableNames = ['sports', 'events', 'games', 'teams', 'athletes', 'results'];
+    console.log('clear tables');
+    Promise.all(tableNames.map((tableName) => {
+      return runQuery(`DELETE FROM ${tableName};`);
+    }))
+      .then(() => {
+        console.log('reset sequences in database');
+        Promise.all(tableNames.map((tableName) => {
+          return runQuery(`DELETE FROM sqlite_sequence WHERE name="${tableName}";`);
+        })).then(() => {
+          startImport();
+        });
+      })
+      .catch(e => console.log(e.message));
   }
-  let tableNames = ['sports', 'events', 'games', 'teams', 'athletes', 'results'];
-  console.log('clear tables');
-  Promise.all(tableNames.map((tableName) => {
-    return runQuery(`DELETE FROM ${tableName};`);
-  }))
-    .then(() => {
-      console.log('reset sequences in database');
-      Promise.all(tableNames.map((tableName) => {
-        return runQuery(`DELETE FROM sqlite_sequence WHERE name="${tableName}";`);
-      })).then(() => {
-        startImport();
-      });
-    })
-    .catch(e => console.log(e));
 });
-let filename = process.argv.slice(2)[0] || 'athlete_events.csv';
 
 function startImport () {
+  console.time('import_timer');
   let rd = readline.createInterface({
     input: fs.createReadStream(filename)
   });
+
   rd.on('line', function (line) {
     let columns = CSVtoArray(line);
     if (columns != null && columns[0] !== 'ID') {
@@ -42,22 +58,19 @@ function startImport () {
     }
   });
   rd.on('close', function () {
-    const promises = [saveCollectionToDb('events', events), saveCollectionToDb('sports', sports), saveGamesToDb(games), saveTeamToDb(teams), saveUsersToDb(userList)];
+    const promises = [
+      saveCollectionToDb('events', events),
+      saveCollectionToDb('sports', sports),
+      saveGamesToDb(games),
+      saveTeamToDb(teams)
+    ];
     Promise.all(promises)
       .then(data => {
-        console.log('all record saved');
+        saveUsersToDb(userList);
       })
-      .catch(e => console.log(e));
+      .catch(e => console.log(e.message));
   });
 }
-
-let sports = new Set();
-let events = new Set();
-let games = {};
-let teams = {};
-let users = [];
-let userList = {};
-let object;
 
 function makeObject (arrWithValues) {
   let keys = [
@@ -91,7 +104,7 @@ function makeObject (arrWithValues) {
 
 function correctValue (key, value) {
   const regexByKeys = {
-    name: /\(.*\)/,
+    name: /\(([^)]+)\)/g,
     team: /-.*/
   };
 
@@ -99,7 +112,7 @@ function correctValue (key, value) {
 }
 
 function removeSubstringByRegex (regularExpression, string) {
-  return string.replace(regularExpression, '');
+  return string.replace(regularExpression, '').trim();
 }
 
 function handleObject (object) {
@@ -187,45 +200,50 @@ function saveTeamToDb (teams) {
 }
 
 function saveUsersToDb (userList) {
-  let userArr = [];
+  let sqlQueries = ['BEGIN TRANSACTION'];
   for (let userId in userList) {
     let item = userList[userId];
-    if (
-      item['year'] !== '1906' &&
-      item['season'] !== '0' &&
-      item['noc'].length >= 3
-    ) {
-      userArr.push(`(${userId}, "${item['name']}", '${item['sex']}','${item['year_of_birth']}',
+    sqlQueries.push(`INSERT INTO athletes (id, full_name, sex, year_of_birth, params, team_id) VALUES (${userId}, "${item['name']}", '${item['sex']}','${item['year_of_birth']}',
       '${item['params']}', (select id from teams where noc_name='${item['noc']}'))`);
-    }
   }
-  let sql = `INSERT INTO athletes (id, full_name, sex, year_of_birth, params, team_id) VALUES ${userArr.join(', ')}`;
-  return runQuery(sql);
+  return Promise.all(sqlQueries.map((query) => {
+    return runQuery(query);
+  }))
+    .then(() => {
+      return runQuery('COMMIT;');
+    }).then(() => {
+      console.log('users saved');
+      sports = Array.from(sports);
+      events = Array.from(events);
+      saveResultToDb(users);
+    })
+    .catch(e => {
+      console.log(e);
+      runQuery('ROLLBACK;');
+    });
 }
 
 function saveResultToDb (users) {
-  let i;
-  let j;
-  let temparray;
-  let chunk = 50;
-  for (i = 0, j = users.length; i < j; i += chunk) {
-    temparray = users.slice(i, i + chunk);
-    let sql = `INSERT INTO results (athlete_id, game_id, sport_id, event_id, medal) VALUES `;
-    temparray.forEach(function (item) {
-      if (item['year'] !== '1906') {
-        sql += `(${item['id']}, 
-       (select id from games where year='${item['year']}' and season='${
-  item['season']
-}'),
-      (select id from sports where name="${item['sport']}"),
-      (select id from events where name="${item['event']}"),
-      "${item['medal']}"),`;
-      }
-    });
-
-    sql = sql.substring(0, sql.length - 1) + ';';
-    db.run(sql);
+  let sqlQueries = ['BEGIN TRANSACTION'];
+  for (let userId in users) {
+    let item = users[userId];
+    sqlQueries.push(`INSERT INTO results (athlete_id, game_id, sport_id, event_id, medal) VALUES (${userId}, 
+       ${findGame(item['year'] + '-' + item['season'])},${sports.indexOf(item['sport'])},
+      ${events.indexOf(item['event'])},${item['medal']})`);
   }
+  return Promise.all(sqlQueries.map((sqlQueries) => {
+    return runQuery(sqlQueries);
+  })).then(() => {
+    return runQuery('COMMIT;');
+  }).then(() => {
+    console.log('save complete');
+    console.timeEnd('import_timer');
+    closeDbConnection();
+  })
+    .catch(e => {
+      console.log(e);
+      runQuery('ROLLBACK;');
+    });
 }
 
 function runQuery (query) {
@@ -238,4 +256,25 @@ function runQuery (query) {
       }
     });
   });
+}
+
+function closeDbConnection () {
+  db.close((err) => {
+    if (err) {
+      return console.error(err.message);
+    } else {
+      console.log('Close the database connection.');
+      process.exit();
+    }
+  });
+}
+
+function findGame (game) {
+  let index = 0;
+  for (let gameKey in games) {
+    if (gameKey === game) {
+      return index;
+    }
+    index++;
+  }
 }

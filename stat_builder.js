@@ -5,6 +5,6 @@ let params = process.argv.slice(2);
 try {
   params = paramsBuilder(params);
   new ChartBuilder(params).buildChartByDataFromDB();
-} catch (err) {
-  console.log(err);
+} catch (e) {
+  console.log(e.message);
 }

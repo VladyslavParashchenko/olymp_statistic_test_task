@@ -1,3 +1,5 @@
+'use strict';
+
 let sqlite3 = require('sqlite3').verbose();
 let dbFileName = 'olympic_history.db';
 class DB {
@@ -20,7 +22,7 @@ class DB {
   buildRestictionsByParams (params) {
     let restrictions = [];
     for (let key in params) {
-      if (key !== 'chart_type' && params[key] !== null) {
+      if (key !== 'chart_type' && params[key] !== null && params[key] !== undefined) {
         restrictions.push(`${key}="${params[key]}"`);
       }
     }
@@ -38,8 +40,8 @@ class DB {
 
 class MedalsStatDB extends DB {
   selectStat (params) {
-    let sql = `SELECT * FROM (SELECT  year item, count(r.id) count FROM games g JOIN results r on g.id=r.game_id JOIN athletes a on a.id=r.athlete_id 
-    JOIN teams t on t.id=a.team_id ${this.buildRestictionsByParams(params)}  GROUP BY year union select year, 0 from games) GROUP BY item ORDER BY item desc;`;
+    let sql = `SELECT item, sum(count) count FROM (SELECT  year item, count(r.id) count FROM games g JOIN results r on g.id=r.game_id JOIN athletes a on a.id=r.athlete_id 
+    JOIN teams t on t.id=a.team_id ${this.buildRestictionsByParams(params)}  GROUP BY year union select year, 0 from games ${this.buildRestictionsByParam(params, 'season')}) GROUP BY item ORDER BY item desc;`;
     return this.runQuery(sql);
   }
 
