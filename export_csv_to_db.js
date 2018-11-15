@@ -117,7 +117,7 @@ function removeSubstringByRegex (regularExpression, string) {
 
 function handleObject (object) {
   let age = object['age'];
-  let year = object['year']
+  let year = object['year'];
   object['year_of_birth'] = (age !== null && year !== null) ? year - age : null;
   object['params'] = JSON.stringify({
     height: object['height'],
