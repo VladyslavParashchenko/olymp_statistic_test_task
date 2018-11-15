@@ -117,7 +117,8 @@ function removeSubstringByRegex (regularExpression, string) {
 
 function handleObject (object) {
   let age = object['age'];
-  object['year_of_birth'] = age !== null ? new Date().getFullYear() - age : null;
+  let year = object['year']
+  object['year_of_birth'] = (age !== null && year !== null) ? year - age : null;
   object['params'] = JSON.stringify({
     height: object['height'],
     weight: object['weight']
@@ -177,14 +178,17 @@ function saveCollectionToDb (tableName, collection) {
 
 function saveGamesToDb (games) {
   let gamesArr = [];
+  let id = 1;
   for (let item in games) {
     let data = item.split('-');
     let cities = Array.from(games[item]).join(',');
     if (item !== '1906-0') {
-      gamesArr.push(`('${data[0]}','${data[1]}',"${cities}")`);
+      gamesArr.push(`(${id},'${data[0]}','${data[1]}',"${cities}")`);
     }
+    games[item]['id'] = id;
+    id++;
   }
-  let sql = `INSERT INTO games (year, season, city) VALUES ${gamesArr.join(', ')}`;
+  let sql = `INSERT INTO games (id, year, season, city) VALUES ${gamesArr.join(', ')}`;
   console.log(`games are saving`);
   return runQuery(sql);
 }
@@ -227,7 +231,7 @@ function saveResultToDb (users) {
   let sqlQueries = ['BEGIN TRANSACTION'];
   for (let userId in users) {
     let item = users[userId];
-    sqlQueries.push(`INSERT INTO results (athlete_id, game_id, sport_id, event_id, medal) VALUES (${userId}, 
+    sqlQueries.push(`INSERT INTO results (athlete_id, game_id, sport_id, event_id, medal) VALUES (${users[userId]['id']}, 
        ${findGame(item['year'] + '-' + item['season'])},${sports.indexOf(item['sport'])},
       ${events.indexOf(item['event'])},${item['medal']})`);
   }
@@ -270,11 +274,9 @@ function closeDbConnection () {
 }
 
 function findGame (game) {
-  let index = 0;
   for (let gameKey in games) {
     if (gameKey === game) {
-      return index;
+      return games[gameKey]['id'];
     }
-    index++;
   }
 }

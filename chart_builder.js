@@ -1,5 +1,3 @@
-'use strict';
-
 const DB = require('./db');
 module.exports = class ChartBuilder {
   constructor (chartParams) {
@@ -35,7 +33,7 @@ module.exports = class ChartBuilder {
         console.log(firstColumn);
       } else {
         secondColumn = ' '.repeat(item['relative_value']);
-        console.log(firstColumn, '\x1b[41m', secondColumn, '\x1b[0m');
+        console.log(firstColumn, '\x1b[41m', secondColumn, '\x1b[0m', item['count']);
       }
     });
   }
@@ -53,10 +51,10 @@ module.exports = class ChartBuilder {
   displayChartTitle () {
     switch (this.chartParams['char_type']) {
       case 'medals':
-        console.log('Year', '     ', 'Amount');
+        console.log('Year', '\t', 'Amount');
         return;
       case 'top-teams':
-        console.log('NOC', '     ', 'Amount');
+        console.log('NOC', '\t', 'Amount');
     }
   }
 };

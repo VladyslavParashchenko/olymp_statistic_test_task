@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = function (params) {
   let chartType = params.shift();
   let objectWithParams = processInputParamsByChartType(params, chartType);
@@ -34,7 +32,7 @@ function getValueFromParams (params, possibleValues, required = false, paramName
   if (required && valueFromParams == null) {
     throw Error(`param ${paramName} is required`);
   }
-  return valueFromParams;
+  return valueFromParams || possibleValues;
 }
 
 function isValuePresentInParams (params, value) {
@@ -47,7 +45,10 @@ function isValuePresentInParams (params, value) {
   }
 }
 
-function getEnumByValue (value) {
+function getEnumByValue (paramValue) {
+  return Array.isArray(paramValue) ? paramValue.map((value) => valueToEnum(value)) : valueToEnum(paramValue);
+}
+function valueToEnum (value) {
   switch (value) {
     case 'summer':
       return 0;
